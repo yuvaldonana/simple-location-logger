@@ -1,4 +1,5 @@
 import time
+from tracemalloc import stop
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
 import json
@@ -14,48 +15,75 @@ if __name__ == "__main__":
 
 
 
+
 def on_modified(event):
-    print(f"hey buddy, {event.src_path} has been modified")
-    if event.src_path == '.\\db.json':
-        conn = sqlite3.connect('.\\locations.db')
-
-        cursor = conn.cursor()
-
-
+    #if event.src_path == '.\\.json':'
+        time.sleep(3)
         with open('.\\db.json') as f:
-            data = json.load(f)
+                data = json.load(f)
+                reports = data['report']
+        if len(reports) <= 0:
+            stop()
+        else:
+    
+    
+            conn = sqlite3.connect('.\\locations.db')
 
-        cursor.executescript('''
+            cursor = conn.cursor()
 
-        DROP TABLE IF EXISTS transition;
+            print('connected')
 
-        DROP TABLE IF EXISTS locations;
 
-        DROP TABLE IF EXISTS waypoints;
+            with open('.\\db.json') as f:
+                data = json.load(f)
+                reports = data['report']
 
-        CREATE TABLE transition (ID, Location, Event, Latitude, Longitude, Trigger, Accuracy, Device, ModTime, Time);
-
-        CREATE TABLE locations (ID, Latitude, Longitude, Trigger, Accuracy, Device, Altitude, Battery, Time);
-
-        CREATE TABLE waypoints (ID, Location, Radius, Latitude, Longitude, Time);
-
-        ''')
-
-        for entrey in data['employees']:
-            if len(entrey) > 3:
-                if entrey['_type'] == 'transition':
-                    cursor.execute("insert into transition values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    [entrey['id'], entrey['desc'], entrey["event"], entrey["lat"], entrey["lon"], entrey["t"], entrey["acc"], entrey["tid"], datetime.utcfromtimestamp(entrey["wtst"]).strftime('%Y-%m-%d %H:%M:%S'), datetime.utcfromtimestamp(entrey["tst"]).strftime('%Y-%m-%d %H:%M:%S')])    
-                    conn.commit()
-                if entrey['_type'] == 'location':
-                    cursor.execute("insert into locations values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    [entrey['id'], entrey['lat'], entrey["lon"], entrey["t"], entrey["acc"], entrey["tid"], entrey["alt"], entrey["batt"], datetime.utcfromtimestamp(entrey["tst"]).strftime('%Y-%m-%d %H:%M:%S')])    
-                    conn.commit()
+            for x in reports:
+                
+                if len(x) > 3:
+                    if 'wtst' in x:
+                        cursor.execute("insert into transition values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        [x['id'], x['desc'], x["event"], x["lat"], x["lon"], x["t"], x["acc"], x["tid"], datetime.utcfromtimestamp(x["wtst"]).strftime('%Y-%m-%d %H:%M:%S'), datetime.utcfromtimestamp(x["tst"]).strftime('%Y-%m-%d %H:%M:%S')])    
+                        conn.commit()
+                        time.sleep(5)
+                        with open('.\\db.json', 'w') as f:
+                            f.write('''{
+"report": [
+        
+]
+}''')
+                            f.close()
+                    if 'batt' in x:
+                        cursor.execute("insert into locations values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        [x['id'], x['lat'], x["lon"], x["t"], x["acc"], x["tid"], x["alt"], x["batt"], datetime.utcfromtimestamp(x["tst"]).strftime('%Y-%m-%d %H:%M:%S')])    
+                        conn.commit()
+                        time.sleep(5)
+                        with open('.\\db.json', 'w') as f:
+                            f.write('''{
+"report": [
+        
+]
+}''')
+                            f.close()
                     
-                if entrey['_type'] == 'waypoint':
-                    cursor.execute("insert into waypoints values (?, ?, ?, ?, ?, ?)",
-                    [entrey['id'], entrey['desc'], entrey["rad"], entrey["lat"], entrey["lon"], datetime.utcfromtimestamp(entrey["tst"]).strftime('%Y-%m-%d %H:%M:%S')])    
-                    conn.commit()
+                    
+                    
+                    if 'rad' in x:
+                        cursor.execute("insert into waypoints values (?, ?, ?, ?, ?, ?)",
+                        [x['id'], x['desc'], x["rad"], x["lat"], x["lon"], datetime.utcfromtimestamp(x["tst"]).strftime('%Y-%m-%d %H:%M:%S')])    
+                        conn.commit()
+                        time.sleep(5)
+                        with open('.\\db.json', 'w') as f:
+                            f.write('''{
+"report": [
+        
+]
+}''')
+                            f.close()
+                    else:
+                        print('error')
+
+
         
 
 
