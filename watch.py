@@ -1,5 +1,5 @@
 import time
-from tracemalloc import stop
+import sys
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
 import json
@@ -23,7 +23,7 @@ def on_modified(event):
                 data = json.load(f)
                 reports = data['report']
         if len(reports) <= 0:
-            stop()
+            sys.exit('error')
         else:
     
     
